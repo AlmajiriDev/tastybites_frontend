@@ -172,9 +172,13 @@ const OrderForm: React.FC = () => {
       }
 
       navigate('/orders');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save order:', err);
-      setError(`Failed to save order: ${err.message}.`);
+      let errorMessage = 'An unknown error occurred.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(`Failed to save order: ${errorMessage}.`);
     } finally {
       setLoading(false);
     }

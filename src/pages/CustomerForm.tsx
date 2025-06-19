@@ -1,10 +1,8 @@
-// src/pages/CustomerForm.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-// Define the shape of customer data for type safety (matching Prisma Customer model)
 interface Customer {
-  id: number; // Changed from string to number
+  id: number;
   firstName: string;
   lastName: string;
   middleName?: string;
@@ -17,7 +15,6 @@ interface Customer {
   updatedAt?: string;
 }
 
-// Define the shape of the data submitted from the form
 interface CustomerFormData {
   firstName: string;
   lastName: string;
@@ -28,12 +25,11 @@ interface CustomerFormData {
 }
 
 const CustomerForm: React.FC = () => {
-  const { id: paramId } = useParams<{ id: string }>(); // Get ID from URL params (always string)
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Convert paramId to number for internal use; it's undefined if not in URL
   const id = paramId ? parseInt(paramId, 10) : undefined;
-  const isEditMode = !!id; // True if numeric ID exists (editing), false if not (creating)
+  const isEditMode = !!id;
 
   const [formData, setFormData] = useState<CustomerFormData>({
     firstName: '',
@@ -47,15 +43,14 @@ const CustomerForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const API_BASE_URL = 'http://localhost:3000'; // Your NestJS backend URL
+  const API_BASE_URL = 'http://localhost:3000';
 
-  // In edit mode, fetch existing customer data
   useEffect(() => {
     if (isEditMode && id) {
       // Now 'id' is number
       setLoading(true);
       setError(null);
-      fetch(`${API_BASE_URL}/customers/${id}`) // id used in URL, will be stringified
+      fetch(`${API_BASE_URL}/customers/${id}`)
         .then(async (response) => {
           if (!response.ok) {
             const errorData = await response
@@ -101,7 +96,7 @@ const CustomerForm: React.FC = () => {
     setError(null);
 
     const method = isEditMode ? 'PATCH' : 'POST';
-    const url = isEditMode ? `${API_BASE_URL}/customers/${id}` : `${API_BASE_URL}/customers`; // id used in URL
+    const url = isEditMode ? `${API_BASE_URL}/customers/${id}` : `${API_BASE_URL}/customers`;
 
     try {
       const response = await fetch(url, {
@@ -124,9 +119,13 @@ const CustomerForm: React.FC = () => {
       }
 
       navigate('/customers');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save customer:', err);
-      setError(`Failed to save customer: ${err.message}.`);
+      if (err instanceof Error) {
+        setError(`Failed to save customer: ${err.message}.`);
+      } else {
+        setError('Failed to save customer: An unknown error occurred.');
+      }
     } finally {
       setLoading(false);
     }

@@ -1,26 +1,22 @@
-// src/pages/OrdersList.tsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// Define the shape of Customer within an Order (as included by Prisma)
 interface OrderCustomer {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
-  // ... other customer fields you might want to display, but keep it minimal for a list
 }
 
-// Define the shape of Order data (matching Prisma Order model, with included customer)
 interface Order {
   id: string;
   customerId: string;
-  customer: OrderCustomer; // The nested customer object from the backend
-  orderDate: string; // From Table 2: a. Order date (as string from API)
-  menuItems: string[]; // List of menu item names as strings
+  customer: OrderCustomer;
+  orderDate: string;
+  menuItems: string[];
   specialInstructions?: string;
   paymentMethod?: string;
-  nextReservationDate?: string; // Optional, as string from API
+  nextReservationDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,7 +26,7 @@ const OrdersList: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE_URL = 'http://localhost:3000'; // Your NestJS backend URL
+  const API_BASE_URL = 'http://localhost:3000';
 
   const fetchOrders = () => {
     setLoading(true);
@@ -53,10 +49,9 @@ const OrdersList: React.FC = () => {
       .finally(() => setLoading(false));
   };
 
-  // Fetch orders when the component mounts
   useEffect(() => {
     fetchOrders();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this order?')) {
@@ -72,7 +67,6 @@ const OrdersList: React.FC = () => {
             .catch(() => ({ message: 'Unknown error occurred.' }));
           throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
-        // Remove the deleted order from the local state
         setOrders((prev) => prev.filter((order) => order.id !== id));
       } catch (err: unknown) {
         console.error('Failed to delete order:', err);
@@ -103,7 +97,8 @@ const OrdersList: React.FC = () => {
         <table>
           <thead>
             <tr>
-              <th>Order ID</th>
+              <th>S/N</th>
+              <th>Order ID (Internal)</th>
               <th>Customer</th>
               <th>Order Date</th>
               <th>Menu Items</th>
@@ -112,31 +107,37 @@ const OrdersList: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order.id}>
-                <td>{order.id}</td>
-                <td>
-                  {order.customer
-                    ? `${order.customer.firstName} ${order.customer.lastName}`
-                    : 'N/A'}
-                </td>
-                <td>{new Date(order.orderDate).toLocaleDateString()}</td>
-                <td>{order.menuItems.join(', ')}</td>
-                <td>{order.paymentMethod || 'N/A'}</td>
-                <td className="action-buttons">
-                  <Link to={`/orders/edit/${order.id}`}>
-                    <button>Edit</button>
-                  </Link>
-                  <button
-                    className="delete-button"
-                    onClick={() => handleDelete(order.id)}
-                    disabled={loading}
-                  >
-                    {loading ? 'Deleting...' : 'Delete'}
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {orders.map(
+              (
+                order,
+                index, // Added 'index' to the map function
+              ) => (
+                <tr key={order.id}>
+                  <td>{index + 1}</td> {/* Displaying serial number */}
+                  <td>{order.id.substring(0, 8)}...</td> {/* Displaying truncated UUID */}
+                  <td>
+                    {order.customer
+                      ? `${order.customer.firstName} ${order.customer.lastName}`
+                      : 'N/A'}
+                  </td>
+                  <td>{new Date(order.orderDate).toLocaleDateString()}</td>
+                  <td>{order.menuItems.join(', ')}</td>
+                  <td>{order.paymentMethod || 'N/A'}</td>
+                  <td className="action-buttons">
+                    <Link to={`/orders/edit/${order.id}`}>
+                      <button>Edit</button>
+                    </Link>
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDelete(order.id)}
+                      disabled={loading}
+                    >
+                      {loading ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       )}
