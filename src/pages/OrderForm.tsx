@@ -1,35 +1,31 @@
-// src/pages/OrderForm.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-// Define the shape of Customer for the dropdown
 interface CustomerOption {
-  id: number; // Changed from string to number
+  id: string;
   firstName: string;
   lastName: string;
-  email: string; // Include email for better identification in dropdown
+  email: string;
 }
 
-// Define the shape of order data for the form
 interface OrderFormData {
-  customerId: number; // Changed from string to number
+  customerId: string;
   orderDate?: string;
-  menuItems: string; // Stored as a single comma-separated string for form input
+  menuItems: string;
   specialInstructions?: string;
   paymentMethod?: string;
   nextReservationDate?: string;
 }
 
 const OrderForm: React.FC = () => {
-  const { id: paramId } = useParams<{ id: string }>(); // Get ID from URL params (always string)
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Convert paramId to number for internal use; it's undefined if not in URL
-  const id = paramId ? parseInt(paramId, 10) : undefined;
-  const isEditMode = !!id; // True if numeric ID exists (editing), false if not (creating)
+  const id = paramId;
+  const isEditMode = !!id;
 
   const [formData, setFormData] = useState<OrderFormData>({
-    customerId: 0, // Initialize with 0 or a placeholder for number type
+    customerId: '',
     menuItems: '',
     orderDate: '',
     specialInstructions: '',
@@ -43,9 +39,8 @@ const OrderForm: React.FC = () => {
   const [customersLoading, setCustomersLoading] = useState<boolean>(false);
   const [customersError, setCustomersError] = useState<string | null>(null);
 
-  const API_BASE_URL = 'http://localhost:3000'; // Your NestJS backend URL
+  const API_BASE_URL = 'http://localhost:3000';
 
-  // Effect to fetch customers for the dropdown
   useEffect(() => {
     setCustomersLoading(true);
     setCustomersError(null);
@@ -61,14 +56,9 @@ const OrderForm: React.FC = () => {
       })
       .then((data: CustomerOption[]) => {
         setCustomers(data);
-        // If in create mode and there are customers, pre-select the first one if customerId is not set
-        if (!isEditMode && data.length > 0 && formData.customerId === 0) {
-          // Check if customerId is still initial value
+
+        if (!isEditMode && data.length > 0 && formData.customerId === '') {
           setFormData((prev) => ({ ...prev, customerId: data[0].id }));
-        } else if (isEditMode && formData.customerId !== 0) {
-          // In edit mode, ensure the selected customer ID from fetched order data is valid
-          // This ensures the dropdown correctly shows the selected customer if it was loaded first
-          setFormData((prev) => ({ ...prev, customerId: prev.customerId || data[0]?.id || 0 }));
         }
       })
       .catch((err) => {
@@ -76,15 +66,13 @@ const OrderForm: React.FC = () => {
         setCustomersError(`Failed to load customers: ${err.message}.`);
       })
       .finally(() => setCustomersLoading(false));
-  }, [isEditMode, formData.customerId]); // Added formData.customerId to dependencies for edit mode pre-selection
+  }, [isEditMode, formData.customerId]);
 
-  // Effect to fetch existing order data when in edit mode
   useEffect(() => {
     if (isEditMode && id) {
-      // Now 'id' is number
       setLoading(true);
       setError(null);
-      fetch(`${API_BASE_URL}/orders/${id}`) // id used in URL, will be stringified
+      fetch(`${API_BASE_URL}/orders/${id}`)
         .then(async (response) => {
           if (!response.ok) {
             const errorData = await response
@@ -103,7 +91,7 @@ const OrderForm: React.FC = () => {
             : '';
 
           setFormData({
-            customerId: data.customerId || 0, // Ensure it's a number, default to 0 if null/undefined
+            customerId: data.customerId || '',
             menuItems: Array.isArray(data.menuItems) ? data.menuItems.join(', ') : '',
             orderDate: formattedOrderDate,
             specialInstructions: data.specialInstructions || '',
@@ -123,12 +111,8 @@ const OrderForm: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    // For select element (dropdown for customerId), parse value to number
-    if (name === 'customerId') {
-      setFormData((prev) => ({ ...prev, [name]: parseInt(value, 10) }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -137,7 +121,7 @@ const OrderForm: React.FC = () => {
     setError(null);
 
     const method = isEditMode ? 'PATCH' : 'POST';
-    const url = isEditMode ? `${API_BASE_URL}/orders/${id}` : `${API_BASE_URL}/orders`; // id used in URL
+    const url = isEditMode ? `${API_BASE_URL}/orders/${id}` : `${API_BASE_URL}/orders`;
 
     const dataToSend = {
       ...formData,
