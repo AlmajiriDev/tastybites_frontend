@@ -1,10 +1,8 @@
-// src/pages/CustomersList.tsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// Define the shape of customer data (matching Prisma Customer model)
 interface Customer {
-  id: number; // Changed from string to number to reflect serial IDs from backend
+  id: string;
   firstName: string;
   lastName: string;
   middleName?: string;
@@ -22,16 +20,14 @@ const CustomersList: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE_URL = 'http://localhost:3000'; // Your NestJS backend URL
+  const API_BASE_URL = 'http://localhost:3000';
 
-  // Function to fetch customers from the API
   const fetchCustomers = () => {
     setLoading(true);
     setError(null);
     fetch(`${API_BASE_URL}/customers`)
       .then(async (response) => {
         if (!response.ok) {
-          // Attempt to read JSON error message from backend
           const errorData = await response
             .json()
             .catch(() => ({ message: 'Unknown error occurred.' }));
@@ -41,26 +37,22 @@ const CustomersList: React.FC = () => {
       })
       .then((data) => setCustomers(data))
       .catch((err) => {
-        console.error('Failed to fetch customers:', err); // Log full error for debugging
-        setError(`Failed to fetch customers: ${err.message}. Please try again.`); // Display user-friendly message
+        console.error('Failed to fetch customers:', err);
+        setError(`Failed to fetch customers: ${err.message}. Please try again.`);
       })
       .finally(() => setLoading(false));
   };
 
-  // useEffect hook to fetch customers when the component mounts
   useEffect(() => {
     fetchCustomers();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // Function to handle deleting a customer
-  const handleDelete = async (id: number) => {
-    // id is now number
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
       setLoading(true);
       setError(null);
       try {
         const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
-          // id used in URL, will be stringified automatically
           method: 'DELETE',
         });
         if (!response.ok) {
@@ -69,10 +61,8 @@ const CustomersList: React.FC = () => {
             .catch(() => ({ message: 'Unknown error occurred.' }));
           throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
-        // Remove the deleted customer from the local state to update UI
         setCustomers((prev) => prev.filter((customer) => customer.id !== id));
       } catch (err: unknown) {
-        // Use 'unknown' for type safety
         console.error('Failed to delete customer:', err);
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
         setError(`Failed to delete customer: ${errorMessage}`);
@@ -82,12 +72,9 @@ const CustomersList: React.FC = () => {
     }
   };
 
-  // Render loading state
   if (loading) return <p>Loading customers...</p>;
-  // Render error state
   if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
 
-  // Main component render
   return (
     <div>
       <h2>Customer List</h2>
@@ -95,7 +82,6 @@ const CustomersList: React.FC = () => {
         <button>Add New Customer</button>
       </Link>
 
-      {/* Conditional rendering based on whether customers exist */}
       {customers.length === 0 ? (
         <p>No customers found.</p>
       ) : (
@@ -105,6 +91,8 @@ const CustomersList: React.FC = () => {
               <th>First Name</th>
               <th>Last Name</th>
               <th>Middle Name</th>
+              <th>Home Address</th>
+              <th>Date Registered</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -114,10 +102,10 @@ const CustomersList: React.FC = () => {
                 <td>{customer.firstName}</td>
                 <td>{customer.lastName}</td>
                 <td>{customer.middleName}</td>
+                <td>{customer.homeAddress}</td>
+                <td>{customer.registeredAt}</td>
                 <td className="action-buttons">
                   <Link to={`/customers/edit/${customer.id}`}>
-                    {' '}
-                    {/* id used in URL, will be stringified */}
                     <button>Edit</button>
                   </Link>
                   <button

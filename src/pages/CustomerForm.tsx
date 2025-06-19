@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 interface Customer {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
   middleName?: string;
@@ -28,7 +28,8 @@ const CustomerForm: React.FC = () => {
   const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const id = paramId ? parseInt(paramId, 10) : undefined;
+  // FIX: Removed parseInt - id remains string (UUID)
+  const id = paramId;
   const isEditMode = !!id;
 
   const [formData, setFormData] = useState<CustomerFormData>({
@@ -37,7 +38,7 @@ const CustomerForm: React.FC = () => {
     middleName: '',
     dateOfBirth: '',
     homeAddress: '',
-    isMatricNo_23120112027: true,
+    isMatricNo_23120112027: false,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +48,9 @@ const CustomerForm: React.FC = () => {
 
   useEffect(() => {
     if (isEditMode && id) {
-      // Now 'id' is number
       setLoading(true);
       setError(null);
-      fetch(`${API_BASE_URL}/customers/${id}`)
+      fetch(`${API_BASE_URL}/customers/${id}`) // id is now string (UUID)
         .then(async (response) => {
           if (!response.ok) {
             const errorData = await response
@@ -96,7 +96,7 @@ const CustomerForm: React.FC = () => {
     setError(null);
 
     const method = isEditMode ? 'PATCH' : 'POST';
-    const url = isEditMode ? `${API_BASE_URL}/customers/${id}` : `${API_BASE_URL}/customers`;
+    const url = isEditMode ? `${API_BASE_URL}/customers/${id}` : `${API_BASE_URL}/customers`; // id is string (UUID)
 
     try {
       const response = await fetch(url, {
@@ -171,6 +171,7 @@ const CustomerForm: React.FC = () => {
             onChange={handleChange}
           />
         </div>
+
         <div>
           <label htmlFor="dateOfBirth">Date of Birth (Optional):</label>
           <input
@@ -190,6 +191,17 @@ const CustomerForm: React.FC = () => {
             onChange={handleChange}
             rows={3}
           ></textarea>
+        </div>
+        <div>
+          <label htmlFor="isMatricNo_23120112027">Registered by Developer (Flag):</label>{' '}
+          {/* FIX: Ensure checkbox is present */}
+          <input
+            type="checkbox"
+            id="isMatricNo_23120112027"
+            name="isMatricNo_23120112027"
+            checked={formData.isMatricNo_23120112027 || false}
+            onChange={handleChange}
+          />
         </div>
         <button type="submit" disabled={loading}>
           {loading ? 'Saving...' : isEditMode ? 'Update Customer' : 'Add Customer'}
